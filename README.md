@@ -4,14 +4,31 @@ remove black frames from a video. Simple python file to create ffmpeg commands
 
 ## Usage
 
-### rqeuirements
+Download:
+
+```sh
+pip install git+https://github.com/FarisHijazi/deblack
+```
+
+And then just run the bellow command, and the output should be saved as `myvideo.out.mp4`
+
+```
+deblack path/to/myvideo.mp4
+```
 
 
-#### Python3
+If the above doesn't work, then check the [prerequisites](#prerequisites) section for more detailed installation instructions.
+
+## prerequisites
+
+<details>
+  <summary>Click to expand</summary>
+
+### Python3
 
 You need to have python 3 installed in the command line
 
-#### FFmpeg
+### FFmpeg
 
 You need to have `ffmpeg` installed somehow, there are many ways to download it, one way is to download the binary (.exe) and put it in the same directory (make sure it's called ffmpeg.exe)
 https://ffmpeg.org/download.html
@@ -28,27 +45,12 @@ sudo apt install -y ffmpeg
 # mac
 brew install ffmpeg
 ```
-
-### Downloading the program
-
-```sh
-pip install git+https://github.com/FarisHijazi/deblack
-```
-
-## Usage
-
-Make sure you `cd` into the folder where both this script is and the input video.
-
-And then just run the command:
-
-```
-deblack myvideo.mp4
-```
-
-and the output should be saved as `myvideo.out.mp4`
-
+</details>
 
 ## History
+
+<details>
+  <summary>Click to expand</summary>
 
 This project originally started in as a Gist [here](https://gist.github.com/FarisHijazi/eff7a7979440faa84a63657e085ec504).
 
@@ -60,4 +62,5 @@ helpful resources
 - https://video.stackexchange.com/questions/16564/how-to-trim-out-black-frames-with-ffmpeg-on-windows#new-answer?newreg=d534934be5774bd1938b535cd76608cd
 - https://github.com/kkroening/ffmpeg-python/issues/184#issuecomment-493847192
 
+</details>
 
