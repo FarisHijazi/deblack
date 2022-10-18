@@ -18,7 +18,7 @@ setuptools.setup(
     install_requires=[
         "ffmpeg-python",
     ],
-    keywords="html table htmltable html-table base64 report",
+    keywords="ffmpeg script video black frames",
     entry_points={
         "console_scripts": [
             "deblack=deblack:main",

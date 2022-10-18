@@ -4,23 +4,48 @@ remove black frames from a video. Simple python file to create ffmpeg commands
 
 ## Usage
 
-You need to have python 3 installed in the command line, make sure you `cd` into the folder where both this script is and the input video.
+### rqeuirements
+
+
+#### Python3
+
+You need to have python 3 installed in the command line
+
+#### FFmpeg
 
 You need to have `ffmpeg` installed somehow, there are many ways to download it, one way is to download the binary (.exe) and put it in the same directory (make sure it's called ffmpeg.exe)
 https://ffmpeg.org/download.html
 
-Another option is using pip
+
 ```sh
-pip3 install ffmpeg
-# maybe even
-pip3 install static-ffmpeg
+# windows (run this in powershell)
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+choco install -y ffmpeg
+
+# linux ubuntu
+sudo apt install -y ffmpeg
+
+# mac
+brew install ffmpeg
 ```
+
+### Downloading the program
+
+```sh
+pip install git+https://github.com/FarisHijazi/deblack
+```
+
+## Usage
+
+Make sure you `cd` into the folder where both this script is and the input video.
 
 And then just run the command:
+
 ```
-python3 deblack.py myvideo.mp4
+deblack myvideo.mp4
 ```
 
+and the output should be saved as `myvideo.out.mp4`
 
 
 ## History
