@@ -20,19 +20,25 @@ def delete_back2back(l):
     return [x[0] for x in groupby(l)]
 
 
-def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath):
+def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
     cmd = f'ffmpeg -i "{inpath}" -y -filter_complex '
     cmd += '"'
     for i, (start, end) in enumerate(timepairs):
         cmd += (
             f"[0:v]trim=start={start}:end={end},setpts=PTS-STARTPTS,format=yuv420p[{i}v]; "
-            + f"[0:a]atrim=start={start}:end={end},asetpts=PTS-STARTPTS[{i}a]; "
+            + (f"[0:a]atrim=start={start}:end={end},asetpts=PTS-STARTPTS[{i}a]; " if has_audio else "")
         )
     for i, (start, end) in enumerate(timepairs):
-        cmd += f"[{i}v][{i}a]"
-    cmd += f"concat=n={len(timepairs)}:v=1:a=1[outv][outa]"
+        cmd += f"[{i}v]"
+        if has_audio:
+            cmd += f"[{i}a]"
+
+    audio_cmd = " [outa]" if has_audio else ""
+    audio_cmd1 = ":a=1" if has_audio else ""
+    cmd += f"concat=n={len(timepairs)}:v=1{audio_cmd1}[outv]{audio_cmd}"
     cmd += '"'
-    cmd += f' -map [outv] -map [outa] "{outpath}"'
+    audio_cmd = " -map [outa]" if has_audio else ""
+    cmd += f' -map [outv]{audio_cmd} "{outpath}"'
     return cmd
 
 
@@ -52,6 +58,18 @@ def get_blackdetect(inpath, invert=False):
 
 
 def main():
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ("yes", "true", "t", "y", "1"):
+            return True
+        elif v.lower() in ("no", "false", "f", "n", "0"):
+            return False
+        elif v.lower() == 'auto':
+            return 'auto'
+        else:
+            raise argparse.ArgumentTypeError("Boolean value expected.")
+
     parser = argparse.ArgumentParser(
         __doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -59,12 +77,11 @@ def main():
     parser.add_argument(
         "--invert", action="store_true", help="remove nonblack instead of removing black"
     )
+    parser.add_argument("--audio", type=str2bool, default="auto", help="input video contains audio? (auto, yes, no)")
     args = parser.parse_args()
 
     ##FIXME: sadly you must chdir so that the ffprobe command will work
     video_dir, video_name = os.path.split(os.path.join('.', args.input))
-    print("video_dir:", video_dir)
-    print("video_name:", video_name)
     os.chdir(video_dir)
     args.input = video_name
 
@@ -73,12 +90,20 @@ def main():
         ".".join(spl[:-1]) + "." + ("invert" if args.invert else "") + "out." + spl[-1]
     )
 
+    if args.audio == "auto":
+        try:
+            args.audio = subprocess.check_output(shlex.split(f'ffprobe -i "{args.input}" -show_streams -select_streams a -loglevel error')).decode("utf-8").strip() != ""
+        except Exception as e:
+            print(e, "Failed to detect audio, assuming no audio. Use --audio to override.")
+    else:
+        args.audio = args.audio
+
     timepairs = get_blackdetect(args.input, invert=args.invert)
-    cmd = construct_ffmpeg_trim_cmd(timepairs, args.input, outpath)
+    cmd = construct_ffmpeg_trim_cmd(timepairs, args.input, outpath, has_audio=args.audio)
 
     print(cmd)
-    os.system(cmd)
-
+    # run the command cmd
+    subprocess.call(shlex.split(cmd))
 
 if __name__ == "__main__":
     main()
