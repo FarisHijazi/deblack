@@ -21,7 +21,7 @@ setuptools.setup(
     keywords="ffmpeg script video black frames",
     entry_points={
         "console_scripts": [
-            "deblack=deblack:main",
+            "deblack=deblack.deblack:main",
         ]
     },
 )

@@ -1,0 +1,1 @@
+from deblack import main
