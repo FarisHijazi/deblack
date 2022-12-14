@@ -54,6 +54,13 @@ def get_blackdetect(inpath, invert=False):
     times = [float(x.split("=")[1].strip()) for x in delete_back2back(lines) if x]
     assert len(times), "no black detected"
 
+    # Handle video ending with black by adding "duration" as last trim if needed
+    if len(times) % 2 != 0:
+        video_length_cmd = ["ffprobe", "-i", inpath, "-show_entries", "format=duration", "-of", "csv=p=0", "-v", "quiet"]
+        video_length_str = subprocess.check_output(video_length_cmd).decode("utf-8")
+        video_length = float(video_length_str)
+        times.append(video_length)
+
     if not invert:
         times = [0] + times[:-1]
     timepairs = [(times[i], times[i + 1]) for i in range(0, len(times) // 2, 2)]
