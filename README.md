@@ -64,3 +64,25 @@ helpful resources
 
 </details>
 
+## Development
+
+<details>
+  <summary>Click to expand</summary>
+
+### Create test video
+
+```sh
+python test/gen_bw_video.py --outpath test/bw.mp4  # create test video
+python deblack/deblack.py test/bw.mp4  # run deblack on test video
+```
+
+### Add pre-commit hooks
+
+this will format files before commiting
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+</details>
