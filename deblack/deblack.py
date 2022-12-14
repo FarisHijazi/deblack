@@ -10,7 +10,6 @@ Use ffprobe to extract black frames and ffmpeg to trim them and output a new vid
 
 import argparse
 import os
-import shlex
 import subprocess
 
 
@@ -21,32 +20,36 @@ def delete_back2back(l):
 
 
 def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
-    cmd = f'ffmpeg -i "{inpath}" -y -filter_complex '
-    cmd += '"'
+    cmd = ["ffmpeg", "-i", inpath, "-y", "-filter_complex"]
+
+    filter_str = ""
     for i, (start, end) in enumerate(timepairs):
-        cmd += (
+        filter_str += (
             f"[0:v]trim=start={start}:end={end},setpts=PTS-STARTPTS,format=yuv420p[{i}v]; "
             + (f"[0:a]atrim=start={start}:end={end},asetpts=PTS-STARTPTS[{i}a]; " if has_audio else "")
         )
     for i, (start, end) in enumerate(timepairs):
-        cmd += f"[{i}v]"
+        filter_str += f"[{i}v]"
         if has_audio:
-            cmd += f"[{i}a]"
+            filter_str += f"[{i}a]"
 
     audio_cmd = " [outa]" if has_audio else ""
     audio_cmd1 = ":a=1" if has_audio else ""
-    cmd += f"concat=n={len(timepairs)}:v=1{audio_cmd1}[outv]{audio_cmd}"
-    cmd += '"'
-    audio_cmd = " -map [outa]" if has_audio else ""
-    cmd += f' -map [outv]{audio_cmd} "{outpath}"'
+    filter_str += f"concat=n={len(timepairs)}:v=1{audio_cmd1}[outv]{audio_cmd}"
+    cmd.append(filter_str)
+
+    cmd.extend(["-map", "[outv]"])
+    cmd.extend(["-map", "[outa]"] if has_audio else [])
+    cmd.append(outpath)
+
     return cmd
 
 
 def get_blackdetect(inpath, invert=False):
-    ffprobe_cmd = f'ffprobe -f lavfi -i "movie={inpath},blackdetect[out0]" -show_entries tags=lavfi.black_start,lavfi.black_end -of default=nw=1 -v quiet'
-    print("ffprobe_cmd:", ffprobe_cmd)
+    ffprobe_cmd = ["ffprobe", "-f", "lavfi", "-i", f"movie={inpath},blackdetect[out0]", "-show_entries", "tags=lavfi.black_start,lavfi.black_end", "-of", "default=nw=1", "-v", "quiet"]
+    print("ffprobe_cmd:", " ".join(ffprobe_cmd))
     lines = (
-        subprocess.check_output(shlex.split(ffprobe_cmd)).decode("utf-8").split("\n")
+        subprocess.check_output(ffprobe_cmd).decode("utf-8").split("\n")
     )
     times = [float(x.split("=")[1].strip()) for x in delete_back2back(lines) if x]
     assert len(times), "no black detected"
@@ -92,7 +95,8 @@ def main():
 
     if args.audio == "auto":
         try:
-            args.audio = subprocess.check_output(shlex.split(f'ffprobe -i "{args.input}" -show_streams -select_streams a -loglevel error')).decode("utf-8").strip() != ""
+            cmd = ["ffprobe", "-i", args.input, "-show_streams", "-select_streams", "a", "-loglevel", "error"]
+            args.audio = subprocess.check_output(cmd).decode("utf-8").strip() != ""
         except Exception as e:
             print(e, "Failed to detect audio, assuming no audio. Use --audio to override.")
     else:
@@ -103,7 +107,7 @@ def main():
 
     print(cmd)
     # run the command cmd
-    subprocess.call(shlex.split(cmd))
+    subprocess.call(cmd)
 
 if __name__ == "__main__":
     main()
