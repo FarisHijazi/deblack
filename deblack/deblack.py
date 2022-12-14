@@ -24,9 +24,8 @@ def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
 
     filter_str = ""
     for i, (start, end) in enumerate(timepairs):
-        filter_str += (
-            f"[0:v]trim=start={start}:end={end},setpts=PTS-STARTPTS,format=yuv420p[{i}v]; "
-            + (f"[0:a]atrim=start={start}:end={end},asetpts=PTS-STARTPTS[{i}a]; " if has_audio else "")
+        filter_str += f"[0:v]trim=start={start}:end={end},setpts=PTS-STARTPTS,format=yuv420p[{i}v]; " + (
+            f"[0:a]atrim=start={start}:end={end},asetpts=PTS-STARTPTS[{i}a]; " if has_audio else ""
         )
     for i, (start, end) in enumerate(timepairs):
         filter_str += f"[{i}v]"
@@ -46,11 +45,21 @@ def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
 
 
 def get_blackdetect(inpath, invert=False):
-    ffprobe_cmd = ["ffprobe", "-f", "lavfi", "-i", f"movie={inpath},blackdetect[out0]", "-show_entries", "tags=lavfi.black_start,lavfi.black_end", "-of", "default=nw=1", "-v", "quiet"]
+    ffprobe_cmd = [
+        "ffprobe",
+        "-f",
+        "lavfi",
+        "-i",
+        f"movie={inpath},blackdetect[out0]",
+        "-show_entries",
+        "tags=lavfi.black_start,lavfi.black_end",
+        "-of",
+        "default=nw=1",
+        "-v",
+        "quiet",
+    ]
     print("ffprobe_cmd:", " ".join(ffprobe_cmd))
-    lines = (
-        subprocess.check_output(ffprobe_cmd).decode("utf-8").split("\n")
-    )
+    lines = subprocess.check_output(ffprobe_cmd).decode("utf-8").split("\n")
     times = [float(x.split("=")[1].strip()) for x in delete_back2back(lines) if x]
     assert len(times), "no black detected"
 
@@ -76,30 +85,24 @@ def main():
             return True
         elif v.lower() in ("no", "false", "f", "n", "0"):
             return False
-        elif v.lower() == 'auto':
-            return 'auto'
+        elif v.lower() == "auto":
+            return "auto"
         else:
             raise argparse.ArgumentTypeError("Boolean value expected.")
 
-    parser = argparse.ArgumentParser(
-        __doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = argparse.ArgumentParser(__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("input", type=str, help="input video file")
-    parser.add_argument(
-        "--invert", action="store_true", help="remove nonblack instead of removing black"
-    )
+    parser.add_argument("--invert", action="store_true", help="remove nonblack instead of removing black")
     parser.add_argument("--audio", type=str2bool, default="auto", help="input video contains audio? (auto, yes, no)")
     args = parser.parse_args()
 
     ##FIXME: sadly you must chdir so that the ffprobe command will work
-    video_dir, video_name = os.path.split(os.path.join('.', args.input))
+    video_dir, video_name = os.path.split(os.path.join(".", args.input))
     os.chdir(video_dir)
     args.input = video_name
 
     spl = args.input.split(".")
-    outpath = (
-        ".".join(spl[:-1]) + "." + ("invert" if args.invert else "") + "out." + spl[-1]
-    )
+    outpath = ".".join(spl[:-1]) + "." + ("invert" if args.invert else "") + "out." + spl[-1]
 
     if args.audio == "auto":
         try:
@@ -116,6 +119,7 @@ def main():
     print(cmd)
     # run the command cmd
     subprocess.call(cmd)
+
 
 if __name__ == "__main__":
     main()
