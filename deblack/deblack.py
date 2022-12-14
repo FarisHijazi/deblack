@@ -63,7 +63,8 @@ def get_blackdetect(inpath, invert=False):
 
     if not invert:
         times = [0] + times[:-1]
-    timepairs = [(times[i], times[i + 1]) for i in range(0, len(times) // 2, 2)]
+
+    timepairs = [(times[i], times[i + 1]) for i in range(0, len(times), 2)]
     return timepairs
 
 
