@@ -55,6 +55,8 @@ def get_blackdetect(inpath, duration, pic_threshold, pix_threshold, invert=False
         "tags=lavfi.black_start,lavfi.black_end",
         "-of",
         "default=nw=1",
+        "-v",
+        "quiet",
     ]
     print("ffprobe_cmd:", " ".join(ffprobe_cmd))
     lines = subprocess.check_output(ffprobe_cmd).decode("utf-8").split("\n")
