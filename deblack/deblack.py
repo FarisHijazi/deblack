@@ -44,13 +44,13 @@ def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
     return cmd
 
 
-def get_blackdetect(inpath, invert=False):
+def get_blackdetect(inpath, duration, pic_threshold, pix_threshold, invert=False):
     ffprobe_cmd = [
         "ffprobe",
         "-f",
         "lavfi",
         "-i",
-        f"movie={inpath},blackdetect[out0]",
+        f"movie={inpath},blackdetect=black_min_duration={duration}:picture_black_ratio_th={pic_threshold}:pixel_black_th={pix_threshold}[out0]",
         "-show_entries",
         "tags=lavfi.black_start,lavfi.black_end",
         "-of",
@@ -94,6 +94,9 @@ def main():
     parser.add_argument("input", type=str, help="input video file")
     parser.add_argument("--invert", action="store_true", help="remove nonblack instead of removing black")
     parser.add_argument("--audio", type=str2bool, default="auto", help="input video contains audio? (auto, yes, no)")
+    parser.add_argument("--black-min-duration", type=float, default=2.0, help="Minimum length of time to consider - see https://ffmpeg.org/ffmpeg-filters.html#blackdetect for more")
+    parser.add_argument("--picture-black-th", type=float, default=0.98, help="Picture blackness threshold - see https://ffmpeg.org/ffmpeg-filters.html#blackdetect for more")
+    parser.add_argument("--pixel-black-th", type=float, default=0.1, help="Pixel blackness threshold - see https://ffmpeg.org/ffmpeg-filters.html#blackdetect for more")
     args = parser.parse_args()
 
     ##FIXME: sadly you must chdir so that the ffprobe command will work
@@ -113,7 +116,7 @@ def main():
     else:
         args.audio = args.audio
 
-    timepairs = get_blackdetect(args.input, invert=args.invert)
+    timepairs = get_blackdetect(args.input, duration=args.black_min_duration, pic_threshold=args.picture_black_th, pix_threshold=args.pixel_black_th, invert=args.invert)
     cmd = construct_ffmpeg_trim_cmd(timepairs, args.input, outpath, has_audio=args.audio)
 
     print(cmd)
