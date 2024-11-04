@@ -86,3 +86,5 @@ pre-commit install
 ```
 
 </details>
+
+(github actions available)
